@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Quest · Thai Wah</title>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #09091a;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --accent: #FFD93D;
+            --pink: #FF4D8D;
+            --blue: #4FC3F7;
+            --green: #5CDB95;
+            --orange: #FF8A3C;
+            --purple: #B48BFF;
+            --text: #FFFFFF;
+            --muted: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(circle at top right, #1a1b4b, #0f0e2e, #09091a);
+            background-attachment: fixed;
+            color: var(--text);
+            font-family: 'IBM Plex Sans Thai', 'Inter', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glow-overlay {
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(circle at 20% 30%, rgba(255,77,141,0.1), transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(79,195,247,0.1), transparent 40%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app {
+            position: relative;
+            z-index: 1;
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        .logo {
+            font-family: 'Inter', sans-serif;
+            font-weight: 800;
+            font-size: 14px;
+            letter-spacing: 2px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+
+        .logo span { color: var(--pink); }
+
+        .xp-badge {
+            background: rgba(255, 217, 61, 0.1);
+            border: 1px solid var(--accent);
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent);
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pink), var(--accent));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .screen {
+            display: none;
+            animation: slideUp 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+            flex-direction: column;
+            flex: 1;
+        }
+
+        .screen.active { display: flex; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #welcome-screen { text-align: center; justify-content: center; padding-top: 40px; }
+
+        .hero-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            display: inline-block;
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0%, 100% { transform: translateY(0) rotate(-5deg); }
+            50% { transform: translateY(-15px) rotate(5deg); }
+        }
+
+        h1 {
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 15px;
+            background: linear-gradient(to right, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-p { color: var(--muted); font-size: 16px; margin-bottom: 40px; line-height: 1.6; }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--pink), var(--orange));
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover { transform: scale(1.05); }
+
+        .q-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .q-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; line-height: 1.3; }
+        .q-sub { color: var(--muted); font-size: 15px; margin-bottom: 24px; }
+
+        .options-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .opt-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            padding: 16px 20px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            font-family: inherit;
+            color: white;
+            font-size: 15px;
+            width: 100%;
+        }
+
+        .opt-card:hover { background: rgba(255, 255, 255, 0.1); }
+        .opt-card.selected { background: rgba(255, 217, 61, 0.15); border-color: var(--accent); }
+
+        .opt-icon {
+            width: 36px;
+            height: 36px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .input-box {
+            background: var(--bg-card);
+            border: 2px solid var(--glass-border);
+            padding: 18px;
+            border-radius: 18px;
+            margin-bottom: 20px;
+        }
+
+        .input-box input, .input-box select {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 18px;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .input-box select option { background: #1a1b4b; }
+
+        .nav-footer {
+            margin-top: auto;
+            padding: 24px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .btn-back {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: var(--muted);
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: inherit;
+        }
+
+        .btn-next {
+            background: var(--accent);
+            color: var(--bg-dark);
+            border: none;
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 15px;
+        }
+
+        .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ── Result Screen ── */
+        #result-screen { text-align: center; }
+
+        .rank-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--accent), var(--pink));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .score-total {
+            font-size: 48px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .score-sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; margin-top: 4px; }
+
+        .summary-card {
+            background: var(--bg-card);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .desc-text { line-height: 1.7; font-size: 14px; margin-bottom: 16px; color: rgba(255,255,255,0.85); }
+
+        .criteria-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .criteria-row { display: flex; align-items: center; gap: 10px; }
+
+        .criteria-label { flex: 1; font-size: 13px; color: var(--muted); }
+
+        .mini-bar-track {
+            width: 100px;
+            height: 7px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 99px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .mini-bar-fill {
+            height: 100%;
+            border-radius: 99px;
+            background: linear-gradient(90deg, var(--pink), var(--accent));
+        }
+
+        .criteria-pts {
+            width: 32px;
+            text-align: right;
+            font-weight: 700;
+            font-size: 12px;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .action-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: white;
+            padding: 14px;
+            border-radius: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .divider { height: 1px; background: var(--glass-border); margin: 14px 0; }
+
+        .input-group-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin-bottom: 6px;
+            margin-top: 4px;
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 28px; }
+            .rank-title { font-size: 28px; }
+            .score-total { font-size: 40px; }
+        }
+    </style>
+</head>
+<body>
+<div class="glow-overlay"></div>
+<div class="app">
+
+    <div class="topbar">
+        <div class="logo">Thai Wah <span>·</span> AI Quest</div>
+        <div class="xp-badge" id="xp-badge">XP: 0</div>
+    </div>
+    <div class="progress-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <!-- WELCOME -->
+    <div class="screen active" id="welcome-screen">
+        <div class="hero-icon">🎮</div>
+        <h1>คุณคือ AI Avenger<br>หรือยัง?</h1>
+        <p class="welcome-p">มาร่วมประเมินศักยภาพการใช้ AI ในการทำงาน และค้นหาว่าคุณอยู่ในระดับไหนขององค์กร!</p>
+        <button class="btn-primary" onclick="startQuest()">เริ่มการทดสอบ 🚀</button>
+    </div>
+
+    <!-- QUESTION -->
+    <div class="screen" id="question-screen">
+        <div id="question-content"></div>
+        <div class="nav-footer">
+            <button class="btn-back" onclick="prevQuestion()">ย้อนกลับ</button>
+            <button class="btn-next" id="btn-next" onclick="nextQuestion()" disabled>ข้อถัดไป</button>
+        </div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="screen" id="result-screen">
+        <div id="result-content"></div>
+    </div>
+
+</div>
+
+<script>
+/* ─────────────────────────────────────────
+   QUESTION DATA
+   scoring values: high=2, mid=1, low=0
+   frequency: heavy=3, daily=2, weekly=1, never=0
+───────────────────────────────────────── */
+const questData = [
+    {
+        type: 'input-group',
+        keys: ['name', 'email'],
+        title: 'ก่อนเริ่ม บอกเราหน่อยนะ 👋',
+        sub: 'ข้อมูลนี้จะใช้เพื่อสรุปผลและติดตามผล',
+        fields: [
+            { key: 'name',  placeholder: 'ชื่อเล่น...', label: 'ชื่อเล่น', type: 'text' },
+            { key: 'email', placeholder: 'อีเมลบริษัท...', label: 'Email', type: 'email' }
+        ]
+    },
+    {
+        type: 'select',
+        key: 'dept',
+        title: 'สังกัด Business Unit ไหน? 🏢',
+        sub: 'เราจะนำไปสรุปผลตามกลุ่มงาน',
+        options: ['Food Solution','CFO','HR','SSI & NBG','IT','Starch','Corporate']
+    },
+    {
+        type: 'single',
+        key: 'frequency',
+        title: 'ใช้ AI ทำงานบ่อยแค่ไหน? ⚡',
+        sub: 'นับรวมทั้ง ChatGPT, Copilot หรือเครื่องมือ AI อื่นๆ',
+        options: [
+            { v: 'heavy', l: 'ใช้ทุกวันจนเป็น habit แทบขาดไม่ได้', i: '💍' },
+            { v: 'daily', l: 'ใช้อย่างน้อยวันละครั้ง', i: '☀️' },
+            { v: 'weekly', l: 'ใช้อาทิตย์ละ 2–3 ครั้ง', i: '🤝' },
+            { v: 'never', l: 'แทบไม่ได้ใช้เลย', i: '👻' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'goal',
+        title: 'ส่วนใหญ่คุณหยิบ AI มาใช้เพราะอะไร? 🎯',
+        sub: 'เกณฑ์ที่ 1 — ตั้งเป้าหมายชัดและสูง',
+        options: [
+            { v: 'high', l: 'แก้โจทย์งานยาก มีเป้าหมายชัดเจนในใจก่อนถาม', i: '🎯' },
+            { v: 'mid',  l: 'อยากเสร็จเร็วขึ้น ประหยัดเวลา', i: '⏱️' },
+            { v: 'low',  l: 'เบื่องาน / อยากลองเล่น / แก้เบื่อ', i: '🎲' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'iterative',
+        title: 'เมื่อ AI ตอบแล้วไม่ถูกใจ คุณทำอะไรต่อ? 🔁',
+        sub: 'เกณฑ์ที่ 2 — โฟกัสที่ผลลัพธ์ (Iterative Refinement)',
+        options: [
+            { v: 'high', l: 'กำหนดบทบาทให้ AI / ให้ AI ตรวจคำตอบตัวเอง / วนซ้ำจนพอใจ', i: '🧠' },
+            { v: 'mid',  l: 'ปรับ prompt ใหม่แล้วถามซ้ำ', i: '🔁' },
+            { v: 'low',  l: 'รับผลนั้นมาใช้เลย หรือลบทิ้งแล้วถามใหม่ทั้งหมด', i: '📋' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'workflow',
+        title: 'เวลางานซับซ้อน คุณสั่ง AI ยังไง? 🪜',
+        sub: 'เกณฑ์ที่ 3 — คิดงานเป็นขั้นตอน (Workflow Thinking)',
+        options: [
+            { v: 'high', l: 'แตก step ก่อน แล้วสั่งทีละขั้นอย่างเป็นระบบ', i: '🪜' },
+            { v: 'mid',  l: 'แบ่งเป็น 2–3 คำถาม', i: '✂️' },
+            { v: 'low',  l: 'ถามทุกอย่างในคำถามเดียวยาวๆ แล้วรอ', i: '📝' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'partner',
+        title: 'AI ช่วยคุณมากที่สุดในแบบไหน? 🔭',
+        sub: 'เกณฑ์ที่ 4 — ใช้ AI เป็นคู่คิด (Thinking Partner)',
+        options: [
+            { v: 'high', l: 'เป็นคู่คิด ขยายมุมมอง ท้าทายสมมติฐาน', i: '🔭' },
+            { v: 'mid',  l: 'ทั้งทำงานแทนและช่วยคิดบ้าง', i: '⚖️' },
+            { v: 'low',  l: 'ทำงานแทน (Draft / แปล / สรุป)', i: '🤖' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'sharing',
+        scored: true,
+        title: 'คุณแชร์วิธีใช้ AI หรือสอนเพื่อนในทีมบ้างไหม? 🤝',
+        sub: 'เกณฑ์ที่ 5 — ส่งต่อความรู้ (Knowledge Sharing)',
+        options: [
+            { v: 'high', l: 'ทำเป็นประจำ เพื่อนมักมาถามเรื่อง AI กับฉันเสมอ', i: '🌟' },
+            { v: 'mid',  l: 'เคยบ้าง ถ้าเพื่อนถามก็แชร์', i: '🤝' },
+            { v: 'low',  l: 'ยังไม่ค่อยได้แชร์', i: '🔇' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'usecase',
+        scored: true,
+        title: 'คุณมีตัวอย่างงานที่ใช้ AI แล้วเห็นผลชัดเจนไหม? 📌',
+        sub: 'เกณฑ์ที่ 6 — ผลลัพธ์จริงในงาน (Proven Use Case)',
+        options: [
+            { v: 'high', l: 'มี และเล่าเป็นขั้นตอนให้คนอื่นฟังได้เลย', i: '📌' },
+            { v: 'mid',  l: 'มีบ้าง แต่ยังอธิบายให้คนอื่นเข้าใจได้ไม่ชัด', i: '🔍' },
+            { v: 'low',  l: 'ยังไม่มีตัวอย่างที่ชัดเจน', i: '🌫️' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'contribution',
+        scored: false,
+        title: 'ยินดีสละเวลา 10% มาช่วยไดรฟ์ AI ในองค์กรไหม? 🙋',
+        sub: 'หากบริษัทต้องการคนช่วยขับเคลื่อน AI',
+        options: [
+            { v: 'yes',   l: 'ยินดีอย่างยิ่ง พร้อมช่วยเต็มที่!', i: '🔥' },
+            { v: 'maybe', l: 'สนใจ แต่ขอดูรายละเอียดก่อน', i: '🧐' },
+            { v: 'no',    l: 'ขอโฟกัสงานหลักก่อน', i: '🛡️' }
+        ]
+    },
+    {
+        type: 'single',
+        key: 'timeline',
+        scored: false,
+        condition: () => { const s = calcScore(); return s >= 6 && s <= 10; },
+        title: 'พร้อมจะเป็น AI Avenger ภายในกี่เดือน? 🗓️',
+        sub: 'บอกเป้าหมายของคุณให้เราทราบ',
+        options: [
+            { v: 'now', l: 'เดี๋ยวนี้เลย! พร้อม 100%', i: '🔥' },
+            { v: '3m',  l: '3 เดือน', i: '📅' },
+            { v: '6m',  l: '6 เดือน', i: '🗓️' }
+        ]
+    },
+    {
+        type: 'textarea',
+        key: 'readiness',
+        scored: false,
+        condition: () => { const s = calcScore(); return s >= 6 && s <= 10; },
+        title: 'อะไรที่ทำให้คุณพร้อมจะก้าวขึ้นเป็น Avenger? ✍️',
+        sub: 'พิมพ์ได้เลย ไม่มีผิดไม่มีถูก',
+        placeholder: 'เช่น มีเวลาเรียนรู้เพิ่ม, มี use case ที่ชัดขึ้น...'
+    }
+];
+
+/* ─────────────────────────────────────────
+   SCORING CONFIG
+───────────────────────────────────────── */
+const SCORE_MAP = { high: 2, mid: 1, low: 0 };
+const FREQ_MAP  = { heavy: 3, daily: 2, weekly: 1, never: 0 };
+
+const CRITERIA_LABELS = [
+    { key: 'frequency', label: '⚡ ความถี่การใช้งาน', max: 3 },
+    { key: 'goal',      label: '🎯 ตั้งเป้าหมายชัดและสูง', max: 2 },
+    { key: 'iterative', label: '🔁 Iterative Refinement', max: 2 },
+    { key: 'workflow',  label: '🪜 Workflow Thinking', max: 2 },
+    { key: 'partner',   label: '🔭 Thinking Partner', max: 2 },
+    { key: 'sharing',   label: '🤝 Knowledge Sharing', max: 2 },
+    { key: 'usecase',   label: '📌 Proven Use Case', max: 2 },
+];
+
+const MAX_SCORE = 15; // 3 + (6×2)
+
+/* ─────────────────────────────────────────
+   STATE
+───────────────────────────────────────── */
+let currentStep = -1;
+let answers = {};
+let xp = 0;
+
+/* ─────────────────────────────────────────
+   HELPERS
+───────────────────────────────────────── */
+function updateXP(amount) {
+    xp += amount;
+    document.getElementById('xp-badge').textContent = `XP: ${xp}`;
+}
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function calcScore() {
+    let score = FREQ_MAP[answers.frequency] || 0;
+    ['goal','iterative','workflow','partner','sharing','usecase'].forEach(k => {
+        score += SCORE_MAP[answers[k]] || 0;
+    });
+    return score;
+}
+
+function isHeavyUser() {
+    const s = calcScore();
+    return s >= 6 && s <= 10;
+}
+
+function isVisible(step) {
+    const q = questData[step];
+    if (!q.condition) return true;
+    return q.condition();
+}
+
+function getVisibleSteps() {
+    return questData.map((_, i) => i).filter(i => isVisible(i));
+}
+
+function getVisibleIndex(step) {
+    return getVisibleSteps().indexOf(step) + 1;
+}
+
+function getVisibleTotal() {
+    return getVisibleSteps().length;
+}
+
+function getCriteriaScore(key) {
+    if (key === 'frequency') return FREQ_MAP[answers[key]] || 0;
+    return SCORE_MAP[answers[key]] || 0;
+}
+
+/* ─────────────────────────────────────────
+   FLOW
+───────────────────────────────────────── */
+function startQuest() {
+    currentStep = 0;
+    answers = {};
+    xp = 0;
+    document.getElementById('xp-badge').textContent = 'XP: 0';
+    showScreen('question-screen');
+    renderQuestion();
+}
+
+function nextQuestion() {
+    const btn = document.getElementById('btn-next');
+    if (btn.disabled) return;
+    updateXP(20);
+    // Find next visible step
+    let next = currentStep + 1;
+    while (next < questData.length && !isVisible(next)) next++;
+    if (next < questData.length) {
+        currentStep = next;
+        renderQuestion();
+    } else {
+        finish();
+    }
+}
+
+function prevQuestion() {
+    let prev = currentStep - 1;
+    while (prev >= 0 && !isVisible(prev)) prev--;
+    if (prev >= 0) { currentStep = prev; renderQuestion(); }
+    else showScreen('welcome-screen');
+}
+
+/* ─────────────────────────────────────────
+   RENDER QUESTION
+───────────────────────────────────────── */
+function renderQuestion() {
+    const q = questData[currentStep];
+    const visIdx = getVisibleIndex(currentStep);
+    const visTotal = getVisibleTotal();
+    const progress = (visIdx / visTotal) * 100;
+    document.getElementById('progress-bar').style.width = `${progress}%`;
+
+    let html = `
+        <div class="q-label">ข้อ ${visIdx} / ${visTotal}</div>
+        <div class="q-title">${q.title}</div>
+        <div class="q-sub">${q.sub}</div>
+    `;
+
+    if (q.type === 'input-group') {
+        html += q.fields.map(f => `
+            <div class="input-group-label">${f.label}</div>
+            <div class="input-box" style="margin-bottom:12px;">
+                <input type="${f.type}" id="ig-${f.key}" placeholder="${f.placeholder}"
+                       value="${answers[f.key] || ''}" oninput="onInputGroupChange()">
+            </div>`).join('');
+    } else if (q.type === 'input') {
+        html += `<div class="input-box">
+            <input type="text" id="q-input" placeholder="${q.placeholder}" oninput="onInputChange()">
+        </div>`;
+    } else if (q.type === 'select') {
+        html += `<div class="input-box">
+            <select id="q-select" onchange="onSelectChange()">
+                <option value="">-- เลือกแผนก --</option>
+                ${q.options.map(o => `<option value="${o}" ${answers[q.key]===o?'selected':''}>${o}</option>`).join('')}
+            </select>
+        </div>`;
+    } else if (q.type === 'single') {
+        html += `<div class="options-list">${q.options.map(o => `
+            <button class="opt-card ${answers[q.key]===o.v?'selected':''}"
+                    onclick="setSingle('${q.key}','${o.v}')">
+                <div class="opt-icon">${o.i}</div>
+                <div>${o.l}</div>
+            </button>`).join('')}
+        </div>`;
+    } else if (q.type === 'textarea') {
+        html += `<div class="input-box" style="min-height:120px;">
+            <textarea id="q-textarea" placeholder="${q.placeholder}"
+                style="width:100%;background:transparent;border:none;color:white;font-size:16px;font-family:inherit;outline:none;resize:none;min-height:90px;line-height:1.6;"
+                oninput="onTextareaChange()">${answers[q.key] || ''}</textarea>
+        </div>`;
+    }
+
+    document.getElementById('question-content').innerHTML = html;
+
+    if (q.type === 'input') document.getElementById('q-input').value = answers[q.key] || '';
+    validate();
+
+}
+
+/* ─────────────────────────────────────────
+   INPUT HANDLERS
+───────────────────────────────────────── */
+function onInputGroupChange() {
+    const q = questData[currentStep];
+    q.fields.forEach(f => {
+        const el = document.getElementById('ig-' + f.key);
+        if (el) answers[f.key] = el.value.trim();
+    });
+    validate();
+}
+
+function onInputChange() {
+    const q = questData[currentStep];
+    answers[q.key] = document.getElementById('q-input').value.trim();
+    validate();
+}
+
+function onTextareaChange() {
+    const q = questData[currentStep];
+    answers[q.key] = document.getElementById('q-textarea').value.trim();
+    validate();
+}
+
+function onSelectChange() {
+    const q = questData[currentStep];
+    answers[q.key] = document.getElementById('q-select').value;
+    validate();
+}
+
+function setSingle(key, val) {
+    answers[key] = val;
+    renderQuestion();
+    setTimeout(nextQuestion, 300);
+}
+
+function validate() {
+    const q = questData[currentStep];
+    let ok = false;
+    if (q.type === 'input-group') {
+        ok = q.fields.every(f => (answers[f.key] || '').length > 1);
+    } else if (q.type === 'input') {
+        ok = (answers[q.key] || '').length > 1;
+    } else if (q.type === 'textarea') {
+        ok = (answers[q.key] || '').length > 3;
+    } else if (q.type === 'select') {
+        ok = !!answers[q.key];
+    } else {
+        ok = answers[q.key] !== undefined;
+    }
+    document.getElementById('btn-next').disabled = !ok;
+}
+
+/* ─────────────────────────────────────────
+   FINISH & RESULT
+───────────────────────────────────────── */
+/* ─────────────────────────────────────────
+   POWER AUTOMATE — วาง URL ที่ได้จาก Flow ตรงนี้
+───────────────────────────────────────── */
+const POWER_AUTOMATE_URL = 'YOUR_POWER_AUTOMATE_URL_HERE';
+
+const FREQ_LABEL     = { heavy:'ใช้ทุกวัน (Habit)', daily:'วันละครั้ง', weekly:'อาทิตย์ละ 2-3 ครั้ง', never:'แทบไม่ได้ใช้' };
+const GOAL_LABEL     = { high:'แก้โจทย์งานยาก', mid:'ประหยัดเวลา', low:'เบื่องาน/ลองเล่น' };
+const ITER_LABEL     = { high:'กำหนดบทบาท/วนซ้ำ', mid:'ปรับ Prompt ใหม่', low:'รับผลทันที' };
+const WORK_LABEL     = { high:'แตก Step ทีละขั้น', mid:'2-3 คำถาม', low:'ถามครั้งเดียวยาวๆ' };
+const PART_LABEL     = { high:'คู่คิด/ขยายมุมมอง', mid:'ทั้งทำแทนและช่วยคิด', low:'ทำงานแทน' };
+const SHARE_LABEL    = { high:'แชร์ประจำ/เพื่อนถามเสมอ', mid:'แชร์ถ้าถาม', low:'ยังไม่ค่อยแชร์' };
+const CASE_LABEL     = { high:'มี เล่าได้เป็นขั้นตอน', mid:'มีบ้าง แต่ยังไม่ชัด', low:'ยังไม่มี' };
+const CONTRIB_LABEL  = { yes:'ยินดีอย่างยิ่ง', maybe:'สนใจแต่ขอดูก่อน', no:'ขอโฟกัสงานหลัก' };
+const TIMELINE_LABEL = { now:'เดี๋ยวนี้เลย', '3m':'3 เดือน', '6m':'6 เดือน' };
+
+async function sendToExcel(score, rank) {
+    if (!POWER_AUTOMATE_URL || POWER_AUTOMATE_URL === 'YOUR_POWER_AUTOMATE_URL_HERE') return;
+    const payload = {
+        Timestamp:              new Date().toLocaleString('th-TH'),
+        ชื่อเล่น:               answers.name || '',
+        Email:                  answers.email || '',
+        BU:                     answers.dept || '',
+        ความถี่การใช้AI:        FREQ_LABEL[answers.frequency]  || answers.frequency  || '',
+        เป้าหมายการใช้AI:      GOAL_LABEL[answers.goal]       || answers.goal       || '',
+        IterativeRefinement:    ITER_LABEL[answers.iterative]  || answers.iterative  || '',
+        WorkflowThinking:       WORK_LABEL[answers.workflow]   || answers.workflow   || '',
+        ThinkingPartner:        PART_LABEL[answers.partner]    || answers.partner    || '',
+        KnowledgeSharing:       SHARE_LABEL[answers.sharing]   || answers.sharing    || '',
+        ProvenUseCase:          CASE_LABEL[answers.usecase]    || answers.usecase    || '',
+        คะแนนรวม:              score,
+        Rank:                   rank,
+        ยินดีช่วยไดรฟ์AI10:    CONTRIB_LABEL[answers.contribution] || answers.contribution || '',
+        เป้าหมายเป็นAvenger:   TIMELINE_LABEL[answers.timeline]    || '',
+        สิ่งที่ทำให้พร้อม:     answers.readiness || '',
+    };
+    try {
+        await fetch(POWER_AUTOMATE_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch(e) {
+        console.warn('Power Automate send failed:', e);
+    }
+}
+
+function finish() {
+    updateXP(100);
+    const score = calcScore();
+
+    let rank, emoji, desc, rankColor;
+
+    if (score >= 11) {
+        rank = 'AI AVENGER 🦸';
+        emoji = '🦸‍♂️';
+        rankColor = 'var(--accent)';
+        desc = `สุดยอด คุณ <strong>${answers.name}</strong>! คุณใช้ AI เป็นคู่คิดเชิงกลยุทธ์ มีระบบ Workflow ชัดเจน และสามารถขับเคลื่อนการเปลี่ยนแปลงด้าน AI ในองค์กรได้อย่างแท้จริง`;
+        startConfetti();
+    } else if (score >= 6) {
+        rank = 'AI HEAVY USER ⚡';
+        emoji = '⚡';
+        rankColor = 'var(--blue)';
+        desc = `เก่งมากเลย คุณ <strong>${answers.name}</strong>! คุณใช้ AI ได้ช่ำชองและเห็นผลในงานจริง ลองพัฒนา Iterative Refinement และ Workflow Thinking เพิ่มเติม เพื่อก้าวขึ้นสู่ระดับ AVENGER!`;
+    } else {
+        rank = 'AI USER 🌱';
+        emoji = '🌱';
+        rankColor = 'var(--green)';
+        desc = `ดีมากเลย คุณ <strong>${answers.name}</strong>! คุณเริ่มต้นได้ดีแล้ว ลองตั้งเป้าหมายการใช้ AI ให้ชัดขึ้น และฝึกปรับ prompt แบบ Iterative เพื่ออัปเกรดตัวเองได้เร็วขึ้น`;
+    }
+
+    // Build criteria breakdown rows
+    const criteriaHTML = CRITERIA_LABELS.map(c => {
+        const pts = getCriteriaScore(c.key);
+        const pct = Math.round((pts / c.max) * 100);
+        return `
+            <div class="criteria-row">
+                <div class="criteria-label">${c.label}</div>
+                <div class="mini-bar-track">
+                    <div class="mini-bar-fill" style="width:${pct}%"></div>
+                </div>
+                <div class="criteria-pts">${pts}/${c.max}</div>
+            </div>`;
+    }).join('');
+
+    document.getElementById('result-content').innerHTML = `
+        <div class="hero-icon">${emoji}</div>
+        <div class="rank-title">${rank}</div>
+        <div class="score-total">${score}<span style="font-size:20px;color:var(--muted)">/${MAX_SCORE}</span></div>
+        <div class="score-sub">คะแนนรวม</div>
+
+        <div class="summary-card">
+            <p class="desc-text">${desc}</p>
+            <div class="divider"></div>
+            <div class="criteria-list">${criteriaHTML}</div>
+            <div class="divider"></div>
+            <div style="font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:8px;">
+                <div style="display:flex;justify-content:space-between;">
+                    <span>BU: <strong style="color:white">${answers.dept}</strong></span>
+                    <span>XP: <strong style="color:var(--accent)">${xp}</strong></span>
+                </div>
+                <div>Email: <strong style="color:white">${answers.email}</strong></div>
+                <div>ช่วยไดรฟ์ AI 10%: <strong style="color:${answers.contribution==='yes'?'var(--green)':answers.contribution==='maybe'?'var(--accent)':'var(--muted)'}">${{yes:'ยินดีอย่างยิ่ง 🔥',maybe:'สนใจ แต่ขอดูก่อน 🧐',no:'ขอโฟกัสงานหลักก่อน 🛡️'}[answers.contribution]||'-'}</strong></div>
+                ${answers.timeline ? `<div>เป้าหมายเป็น Avenger: <strong style="color:var(--blue)">${{now:'เดี๋ยวนี้เลย! 🔥','3m':'3 เดือน 📅','6m':'6 เดือน 🗓️'}[answers.timeline]}</strong></div>` : ''}
+                ${answers.readiness ? `<div style="margin-top:4px;">สิ่งที่ทำให้พร้อม: <em style="color:rgba(255,255,255,0.8)">"${answers.readiness}"</em></div>` : ''}
+            </div>
+        </div>
+
+        <div class="action-group">
+            <button class="btn-outline" onclick="location.reload()">🔄 ทดสอบใหม่</button>
+            <button class="btn-primary" style="background:var(--accent);color:black;font-size:14px;" onclick="shareResult('${rank}', ${score})">📋 แชร์ผลลัพธ์</button>
+        </div>
+    `;
+
+    showScreen('result-screen');
+    sendToExcel(score, rank); // ส่งข้อมูลไป Power Automate
+}
+
+function shareResult(rank, score) {
+    const text = `ฉันได้ Rank: ${rank} (${score}/${MAX_SCORE} คะแนน) ใน AI Quest ของ Thai Wah!`;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => alert('คัดลอกข้อความแล้ว!'));
+    } else {
+        const el = document.createElement('textarea');
+        document.body.appendChild(el);
+        el.value = text; el.select(); document.execCommand('copy');
+        document.body.removeChild(el);
+        alert('คัดลอกข้อความแล้ว!');
+    }
+}
+
+function startConfetti() {
+    const colors = ['#FFD93D','#FF4D8D','#4FC3F7','#5CDB95','#B48BFF'];
+    for (let i = 0; i < 80; i++) {
+        const c = document.createElement('div');
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        c.style.cssText = `position:fixed;width:${6+Math.random()*6}px;height:${6+Math.random()*6}px;background:${color};border-radius:2px;left:${Math.random()*100}vw;top:-10px;z-index:9999;pointer-events:none;`;
+        document.body.appendChild(c);
+        c.animate(
+            [{ transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+             { transform: `translateY(105vh) rotate(${Math.random()*720 - 360}deg)`, opacity: 0 }],
+            { duration: 2000 + Math.random() * 2000, easing: 'cubic-bezier(.25,.46,.45,.94)' }
+        ).onfinish = () => c.remove();
+    }
+}
+</script>
+</body>
+</html>
