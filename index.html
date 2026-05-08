@@ -447,12 +447,12 @@ const questData = [
     {
         type: 'single',
         key: 'workflow',
-        title: 'เวลางานซับซ้อน คุณสั่ง AI ยังไง? 🪜',
+        title: 'เวลางานซับซ้อน คุณเริ่มต้นยังไง? 🪜',
         sub: 'เกณฑ์ที่ 3 — คิดงานเป็นขั้นตอน (Workflow Thinking)',
         options: [
-            { v: 'high', l: 'แตก step ก่อน แล้วสั่งทีละขั้นอย่างเป็นระบบ', i: '🪜' },
-            { v: 'mid',  l: 'แบ่งเป็น 2–3 คำถาม', i: '✂️' },
-            { v: 'low',  l: 'ถามทุกอย่างในคำถามเดียวยาวๆ แล้วรอ', i: '📝' }
+            { v: 'high', l: 'วางโครงงานก่อนว่ามีกี่ส่วน แล้วสั่ง AI เป็นลำดับขั้น (จะส่ง 1 หรือหลาย message ก็ได้)', i: '🪜' },
+            { v: 'mid',  l: 'คิดคร่าวๆ แล้วค่อยๆ ถามเพิ่มเมื่อได้ผลลัพธ์แต่ละรอบ', i: '✂️' },
+            { v: 'low',  l: 'พิมพ์ทุกอย่างที่นึกออกในครั้งเดียว แล้วรอดูว่า AI จะตอบอะไร', i: '📝' }
         ]
     },
     {
@@ -493,9 +493,9 @@ const questData = [
     {
         type: 'single',
         key: 'contribution',
-        scored: false,
-        title: 'ยินดีสละเวลา 10% มาช่วยไดรฟ์ AI ในองค์กรไหม? 🙋',
-        sub: 'หากบริษัทต้องการคนช่วยขับเคลื่อน AI',
+        scored: true,
+        title: 'หากบริษัทต้องการคนช่วยไดรฟ์ AI คุณยินดีสละเวลา 10% มาช่วยทีมไหม? 🙋',
+        sub: 'คำถามนี้มีน้ำหนักสูงสุดในการประเมิน',
         options: [
             { v: 'yes',   l: 'ยินดีอย่างยิ่ง พร้อมช่วยเต็มที่!', i: '🔥' },
             { v: 'maybe', l: 'สนใจ แต่ขอดูรายละเอียดก่อน', i: '🧐' },
@@ -529,20 +529,22 @@ const questData = [
 /* ─────────────────────────────────────────
    SCORING CONFIG
 ───────────────────────────────────────── */
-const SCORE_MAP = { high: 2, mid: 1, low: 0 };
-const FREQ_MAP  = { heavy: 3, daily: 2, weekly: 1, never: 0 };
+const SCORE_MAP  = { high: 2, mid: 1, low: 0 };
+const FREQ_MAP   = { heavy: 3, daily: 2, weekly: 1, never: 0 };
+const CONTRIB_SCORE = { yes: 3, maybe: 1, no: 0 };
 
 const CRITERIA_LABELS = [
-    { key: 'frequency', label: '⚡ ความถี่การใช้งาน', max: 3 },
-    { key: 'goal',      label: '🎯 ตั้งเป้าหมายชัดและสูง', max: 2 },
-    { key: 'iterative', label: '🔁 Iterative Refinement', max: 2 },
-    { key: 'workflow',  label: '🪜 Workflow Thinking', max: 2 },
-    { key: 'partner',   label: '🔭 Thinking Partner', max: 2 },
-    { key: 'sharing',   label: '🤝 Knowledge Sharing', max: 2 },
-    { key: 'usecase',   label: '📌 Proven Use Case', max: 2 },
+    { key: 'frequency',    label: '⚡ ความถี่การใช้งาน',          max: 3 },
+    { key: 'goal',         label: '🎯 ตั้งเป้าหมายชัดและสูง',     max: 2 },
+    { key: 'iterative',    label: '🔁 Iterative Refinement',       max: 2 },
+    { key: 'workflow',     label: '🪜 Workflow Thinking',           max: 2 },
+    { key: 'partner',      label: '🔭 Thinking Partner',           max: 2 },
+    { key: 'sharing',      label: '🤝 Knowledge Sharing',          max: 2 },
+    { key: 'usecase',      label: '📌 Proven Use Case',            max: 2 },
+    { key: 'contribution', label: '🙋 ยินดีช่วยไดรฟ์ AI (สูงสุด)', max: 3 },
 ];
 
-const MAX_SCORE = 15; // 3 + (6×2)
+const MAX_SCORE = 18; // 3 + (6×2) + 3
 
 /* ─────────────────────────────────────────
    STATE
@@ -570,12 +572,13 @@ function calcScore() {
     ['goal','iterative','workflow','partner','sharing','usecase'].forEach(k => {
         score += SCORE_MAP[answers[k]] || 0;
     });
+    score += CONTRIB_SCORE[answers.contribution] || 0;
     return score;
 }
 
 function isHeavyUser() {
     const s = calcScore();
-    return s >= 6 && s <= 10;
+    return s >= 6 && s <= 11;
 }
 
 function isVisible(step) {
@@ -597,7 +600,8 @@ function getVisibleTotal() {
 }
 
 function getCriteriaScore(key) {
-    if (key === 'frequency') return FREQ_MAP[answers[key]] || 0;
+    if (key === 'frequency')    return FREQ_MAP[answers[key]] || 0;
+    if (key === 'contribution') return CONTRIB_SCORE[answers[key]] || 0;
     return SCORE_MAP[answers[key]] || 0;
 }
 
@@ -801,17 +805,22 @@ function finish() {
 
     let rank, emoji, desc, rankColor;
 
-    if (score >= 11) {
+    const isAvenger = score >= 12 && answers.contribution === 'yes';
+    const isHeavy   = !isAvenger && score >= 6;
+
+    if (isAvenger) {
         rank = 'AI AVENGER 🦸';
         emoji = '🦸‍♂️';
         rankColor = 'var(--accent)';
-        desc = `สุดยอด คุณ <strong>${answers.name}</strong>! คุณใช้ AI เป็นคู่คิดเชิงกลยุทธ์ มีระบบ Workflow ชัดเจน และสามารถขับเคลื่อนการเปลี่ยนแปลงด้าน AI ในองค์กรได้อย่างแท้จริง`;
+        desc = `สุดยอดมากเลย คุณ <strong>${answers.name}</strong>! คุณไม่ได้แค่ใช้ AI เก่ง แต่ยังพร้อมเป็นแรงขับเคลื่อน AI ให้กับองค์กร — นั่นคือ DNA ของ Avenger ตัวจริง!`;
         startConfetti();
-    } else if (score >= 6) {
+    } else if (isHeavy) {
         rank = 'AI HEAVY USER ⚡';
         emoji = '⚡';
         rankColor = 'var(--blue)';
-        desc = `เก่งมากเลย คุณ <strong>${answers.name}</strong>! คุณใช้ AI ได้ช่ำชองและเห็นผลในงานจริง ลองพัฒนา Iterative Refinement และ Workflow Thinking เพิ่มเติม เพื่อก้าวขึ้นสู่ระดับ AVENGER!`;
+        desc = answers.contribution === 'yes'
+            ? `เก่งมากเลย คุณ <strong>${answers.name}</strong>! ทักษะ AI ของคุณดีมาก และยังพร้อมช่วยองค์กรด้วย — พัฒนาทักษะให้แน่นขึ้นอีกนิด แล้วคุณจะก้าวขึ้นเป็น Avenger ได้เลย!`
+            : `เก่งมากเลย คุณ <strong>${answers.name}</strong>! ทักษะ AI ของคุณอยู่ในระดับดีมาก ถ้าพร้อมก้าวขึ้นเป็น Avenger ลองเปิดใจมาช่วยขับเคลื่อน AI ให้องค์กรด้วยกันนะครับ!`;
     } else {
         rank = 'AI USER 🌱';
         emoji = '🌱';
