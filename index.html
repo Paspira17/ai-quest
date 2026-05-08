@@ -506,7 +506,7 @@ const questData = [
         type: 'single',
         key: 'timeline',
         scored: false,
-        condition: () => { const s = calcScore(); return s >= 6 && s <= 10; },
+        condition: () => isHeavyUser(),
         title: 'พร้อมจะเป็น AI Avenger ภายในกี่เดือน? 🗓️',
         sub: 'บอกเป้าหมายของคุณให้เราทราบ',
         options: [
@@ -519,7 +519,7 @@ const questData = [
         type: 'textarea',
         key: 'readiness',
         scored: false,
-        condition: () => { const s = calcScore(); return s >= 6 && s <= 10; },
+        condition: () => isHeavyUser(),
         title: 'อะไรที่ทำให้คุณพร้อมจะก้าวขึ้นเป็น Avenger? ✍️',
         sub: 'พิมพ์ได้เลย ไม่มีผิดไม่มีถูก',
         placeholder: 'เช่น มีเวลาเรียนรู้เพิ่ม, มี use case ที่ชัดขึ้น...'
