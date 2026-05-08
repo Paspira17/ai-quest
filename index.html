@@ -53,6 +53,7 @@
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            min-height: 100dvh;
         }
 
         .topbar {
@@ -223,11 +224,15 @@
         .input-box select option { background: #1a1b4b; }
 
         .nav-footer {
-            margin-top: auto;
-            padding: 24px 0;
+            margin-top: 24px;
+            padding: 16px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            position: sticky;
+            bottom: 0;
+            background: linear-gradient(to top, rgba(9,9,26,0.98) 75%, transparent);
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
         }
 
         .btn-back {
