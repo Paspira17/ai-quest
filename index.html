@@ -578,7 +578,8 @@ function calcScore() {
 
 function isHeavyUser() {
     const s = calcScore();
-    return s >= 6 && s <= 11;
+    const isAvenger = s >= 12 && answers.contribution === 'yes';
+    return !isAvenger && s >= 6;
 }
 
 function isVisible(step) {
